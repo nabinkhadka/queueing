@@ -1,0 +1,51 @@
+version: "3.8"
+services:
+  app:
+    image: demo_queueing_system:latest
+    build:
+      context: .
+    stop_signal: SIGINT
+    environment:
+      - redis_url=redis://redis:6379
+    volumes:
+      - ./app:/app
+    command: python server.py
+    ports:
+      - "5007:5007"
+
+  worker:
+    image: demo_queueing_system:latest
+    restart: always
+    environment:
+      - redis_url=redis://redis:6379
+    deploy:
+      replicas: 1
+    volumes:
+      - ./app:/app
+    command: python worker.py
+    depends_on:
+      - app
+      - redis
+
+  redis:
+    hostname: redis
+    image: redis:7.0.8-bullseye
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+
+  dashboard:
+    image: demo_queueing_system:latest
+    container_name: dashboard
+    ports:
+      - "9181:9181"
+    command: rq-dashboard --redis-url=redis://redis:6379
+    depends_on:
+      - app
+      - redis
+
+
+volumes:
+    redis_data:

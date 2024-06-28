@@ -1,0 +1,4 @@
+flask
+redis>=3.0.0
+rq>=1.7.0
+rq_dashboard
